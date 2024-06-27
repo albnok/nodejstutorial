@@ -45,22 +45,16 @@ const generateId = () => {
 
 app.post('/api/notes', (request, response) => {
   const body = request.body
-
-  if (!body.content) {
-    return response.status(400).json({ 
-      error: 'content missing' 
-    })
+  if (body.content === undefined) {
+    return response.status(400).json({ error: 'content missing' })
   }
-
-  const note = {
+  const note = new Note({
     content: body.content,
-    important: Boolean(body.important) || false,
-    id: generateId(),
-  }
-
-  notes = notes.concat(note)
-
-  response.json(note)
+    important: body.important || false,
+  })
+  note.save().then(savedNote => {
+    response.json(savedNote)
+  })
 })
 
 app.get('/', (request, response) => {
@@ -91,21 +85,11 @@ app.delete('/api/notes/:id', (request, response) => {
 })
 
 app.get('/api/notes/:id', (request, response) => {
-  const id = parseInt(request.params.id)
-  const tid = typeof id
-  console.log("what is my id", id, tid)
-  console.log("notes are", notes)
-  const fnote = notes[0]
-  const tnote = typeof fnote.id
-  console.log("first note id type", tnote)
-const note = notes.find(note => note.id === id)
-  console.log("what is my note", note)
-  if (note) {
+  Note.findById(request.params.id).then(note => {
     response.json(note)
-  } else {
-    response.status(404).end()
-  }
+  })
 })
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
