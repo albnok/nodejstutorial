@@ -81,21 +81,25 @@ app.get('/api/notes', (request, response) => {
     response.json(notes)
   })
 })
-
-app.delete('/api/notes/:id', (request, response) => {
-  const id = parseInt(request.params.id)
-    notes = notes.filter(note => {
-      response.write("noteID is " + note.id + " versus delete target of " + id)
-      const keep = note.id !== id
-    response.write("\nkeep? " + keep + "\n")
-    return keep
-    }
-    )
-// if (note) {
-  response.write("wiped: " + notes)
-  response.status(204).end()
+app.delete('/api/notes/:id', (request, response, next) => {
+  Note.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
-
+app.put('/api/notes/:id', (request, response, next) => {
+  const body = request.body
+  const note = {
+    content: body.content,
+    important: body.important,
+  }
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
+    .then(updatedNote => {
+      response.json(updatedNote)
+    })
+    .catch(error => next(error))
+})
 app.get('/api/notes/:id', (request, response, next) => {
   Note.findById(request.params.id)
     .then(note => {
