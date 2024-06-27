@@ -1,4 +1,10 @@
 POST http://localhost:3001/api/notes
 content-type: application/json
 
-{"content":"can I get a POST from Rest plugin?", "important": true}
+{"content":"sos", "important": true}
+
+###
+PUT http://localhost:3001/api/notes/667cfbdf301ff1dc5d29f83a
+content-type: application/json
+
+{"content":"new content", "important": true}
