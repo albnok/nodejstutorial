@@ -1,5 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
+const mongoose = require('mongoose')
+const Note = require('./models/note')
+const PORT = process.env.PORT || 3001
+
 const requestLogger = (request, response, next) => {
   console.log('Method:', request.method)
   console.log('Path:  ', request.path)
@@ -13,6 +18,7 @@ app.use(cors())
 app.use(express.static('dist'))
 app.use(express.json())
 app.use(requestLogger)
+
 let notes = [
   {
     id: 1,
@@ -62,8 +68,11 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/notes', (request, response) => {
-  response.json(notes)
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
 })
+
 app.delete('/api/notes/:id', (request, response) => {
   const id = parseInt(request.params.id)
     notes = notes.filter(note => {
@@ -97,8 +106,6 @@ const note = notes.find(note => note.id === id)
     response.status(404).end()
   }
 })
-
-const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
