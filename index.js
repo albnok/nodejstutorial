@@ -3,6 +3,7 @@ const express = require('express')
 const app = express()
 const mongoose = require('mongoose')
 const Note = require('./models/note')
+const cors = require('cors')
 const PORT = process.env.PORT || 3001
 
 const requestLogger = (request, response, next) => {
@@ -12,12 +13,26 @@ const requestLogger = (request, response, next) => {
   console.log('---')
   next()
 }
-const cors = require('cors')
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+  next(error)
+}
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
 
 app.use(cors())
 app.use(express.static('dist'))
 app.use(express.json())
 app.use(requestLogger)
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
 
 let notes = [
   {
@@ -79,17 +94,19 @@ app.delete('/api/notes/:id', (request, response) => {
 // if (note) {
   response.write("wiped: " + notes)
   response.status(204).end()
-// } else {
-//   response.send("<h1>can't find note</h1>")
-// }
 })
 
-app.get('/api/notes/:id', (request, response) => {
-  Note.findById(request.params.id).then(note => {
-    response.json(note)
-  })
+app.get('/api/notes/:id', (request, response, next) => {
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+app.use(unknownEndpoint) // handler of requests with unknown endpoint
+app.use(errorHandler) // this has to be the last loaded middleware, also all the routes should be registered before this!
